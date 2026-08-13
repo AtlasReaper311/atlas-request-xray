@@ -89,3 +89,8 @@ test("encoding is stable, so the same configuration always produces the same lin
   assert.equal(encodeState({ config }), encodeState({ config }));
   assert.equal(encodeState({ config }), encodeState({ config: normaliseConfig(config) }));
 });
+
+test("default state can be omitted so the canonical landing URL stays clean", () => {
+  assert.equal(encodeState({ config: {}, omitDefault: true }), "");
+  assert.notEqual(encodeState({ config: { retries: 1 }, omitDefault: true }), "");
+});
