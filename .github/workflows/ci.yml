@@ -1,0 +1,92 @@
+name: Pull request CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Request X-Ray validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Check module syntax
+        run: |
+          set -euo pipefail
+          for module in src/*.js; do
+            node --check "${module}"
+          done
+
+      - name: Run engine and permalink tests
+        run: node --test test/*.test.mjs
+
+      - name: Validate HTML
+        run: npx --yes html-validate@9.7.1 index.html
+
+      - name: Check that the interface only loads modules that exist
+        run: |
+          python3 - <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          missing = []
+          for reference in re.findall(r'(?:src|href)="((?:src|css)/[^"]+)"', html):
+              if not Path(reference).is_file():
+                  missing.append(reference)
+          for module in sorted(Path("src").glob("*.js")):
+              for target in re.findall(r'from "\./([^"]+)"', module.read_text(encoding="utf-8")):
+                  if not (module.parent / target).is_file():
+                      missing.append(f"{module}: {target}")
+          if missing:
+              print("unresolved references: " + ", ".join(missing), file=sys.stderr)
+              raise SystemExit(1)
+          print("every referenced module and stylesheet exists")
+          PY
+
+      - name: Check prose policy and whitespace
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          banned = ("cutting-edge", "leveraged", "robust", "seamless", "state-of-the-art", "utilised")
+          failures = []
+          for path in (Path("README.md"), *sorted(Path("docs").glob("*.md"))):
+              text = path.read_text(encoding="utf-8")
+              prose = re.sub(r"`[^`\n]+`", "", re.sub(r"```.*?```", "", text, flags=re.DOTALL))
+              for term in banned:
+                  if term in prose.lower():
+                      failures.append(f"{path}: banned wording '{term}'")
+              if "—" in prose:
+                  failures.append(f"{path}: em dash in prose")
+          if failures:
+              print("\n".join(failures), file=sys.stderr)
+              raise SystemExit(1)
+          print("prose policy clean")
+          PY
+          git diff --check
+
+      - name: Check repository links offline
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: "--offline --no-progress --include-fragments --root-dir ${{ github.workspace }} ."
+          fail: true
