@@ -1,0 +1,16 @@
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Local environment
+.env
+.env.local
