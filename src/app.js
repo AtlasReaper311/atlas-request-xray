@@ -7,6 +7,8 @@
  */
 
 import { simulateRequest, LAYERS, LAYER_SWITCHES, DEFAULT_BUDGET_MS, normaliseConfig } from "./engine.js";
+import { installEstateSearch } from "./estate-search.js";
+import { STATUS_ENDPOINT, STATUS_LABELS, parseEstateStatus } from "./estate-status.js";
 import { createPlayback, OUTCOME_STATE } from "./playback.js";
 import { PRESETS } from "./presets.js";
 import { encodeState, decodeState } from "./permalink.js";
@@ -55,6 +57,7 @@ const el = {
   unpin: $("unpin"),
   compareGrid: $("compare-grid"),
   packet: $("packet"),
+  estateStatus: document.querySelector("[data-atlas-status]"),
 };
 
 const inputs = {
@@ -200,8 +203,48 @@ function syncInputs() {
 }
 
 function syncUrl() {
-  const query = encodeState({ config: state.config, compare: Boolean(state.pinned), compareConfig: state.pinned });
-  globalThis.history.replaceState(null, "", `${globalThis.location.pathname}?${query}`);
+  const query = encodeState({
+    config: state.config,
+    compare: Boolean(state.pinned),
+    compareConfig: state.pinned,
+    omitDefault: true,
+  });
+  const next = query ? `${globalThis.location.pathname}?${query}` : globalThis.location.pathname;
+  globalThis.history.replaceState(null, "", next);
+}
+
+function setAtlasStatus(result) {
+  if (!el.estateStatus) return;
+  el.estateStatus.dataset.state = result.state;
+  el.estateStatus.setAttribute("aria-label", `Atlas Systems status: ${result.label}`);
+  el.estateStatus.title = result.detail;
+  const dot = el.estateStatus.querySelector(".status-dot");
+  if (dot) dot.dataset.state = result.state;
+  const label = el.estateStatus.querySelector("[data-atlas-status-label]");
+  if (label) label.textContent = result.label;
+}
+
+async function refreshAtlasStatus() {
+  if (!el.estateStatus) return;
+  const controller = new AbortController();
+  const timer = globalThis.setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(STATUS_ENDPOINT, {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    setAtlasStatus(parseEstateStatus(await response.json()));
+  } catch {
+    setAtlasStatus({
+      state: "unknown",
+      label: STATUS_LABELS.unknown,
+      detail: "Status evidence could not be loaded.",
+    });
+  } finally {
+    globalThis.clearTimeout(timer);
+  }
 }
 
 function setChip(layer, hop) {
@@ -462,6 +505,8 @@ async function copy(text, hintNode, message) {
 
 renderPresets();
 renderLayerTabs();
+installEstateSearch();
+void refreshAtlasStatus();
 syncInputs();
 markPresetMatch();
 syncUrl();

@@ -20,6 +20,15 @@ const KEYS = Object.freeze({
 
 const COMPARE_PREFIX = "b";
 const COMPARE_FLAG = "cmp";
+const DEFAULT_CONFIG = normaliseConfig({});
+
+function sameConfig(left, right) {
+  return JSON.stringify(normaliseConfig(left)) === JSON.stringify(normaliseConfig(right));
+}
+
+function isDefaultState({ config, compare = false, compareConfig = null }) {
+  return !compare && !compareConfig && sameConfig(config, DEFAULT_CONFIG);
+}
 
 /** Serialise a configuration into query parameters. */
 export function writeParams(params, config, { prefix = "" } = {}) {
@@ -49,7 +58,8 @@ export function readParams(params, { prefix = "" } = {}) {
  *
  * @param {{config: object, compare: boolean, compareConfig: object}} state
  */
-export function encodeState({ config, compare = false, compareConfig = null }) {
+export function encodeState({ config, compare = false, compareConfig = null, omitDefault = false }) {
+  if (omitDefault && isDefaultState({ config, compare, compareConfig })) return "";
   const params = new URLSearchParams();
   writeParams(params, config);
   if (compare && compareConfig) {

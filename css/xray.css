@@ -3,7 +3,37 @@
  * Self-contained Atlas interface treatment for the custom-domain deployment.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Serif+Display:ital@0;1&display=swap");
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../static/vendor/atlas-interface/v0.5.0/fonts/ibm-plex-mono-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../static/vendor/atlas-interface/v0.5.0/fonts/ibm-plex-mono-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../static/vendor/atlas-interface/v0.5.0/fonts/dm-serif-display-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../static/vendor/atlas-interface/v0.5.0/fonts/dm-serif-display-400-italic.woff2") format("woff2");
+}
 
 :root {
   color-scheme: dark;
@@ -38,6 +68,8 @@
   --atlas-content-wide: 1360px;
   --atlas-prose: 760px;
   --atlas-header-height: 56px;
+  --atlas-z-dialog: 200;
+  --atlas-shadow-floating: 0 24px 70px rgba(0, 0, 0, 0.38);
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --serif: "DM Serif Display", Georgia, serif;
   --bg: var(--atlas-bg);
@@ -220,6 +252,40 @@ dd {
   color: var(--accent);
 }
 
+.atlas-search-control {
+  min-height: var(--atlas-control-standard);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--atlas-radius-md);
+  background: rgba(17, 17, 24, 0.72);
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 14px;
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.atlas-search-control:hover {
+  border-color: var(--border-hi);
+  color: var(--text);
+}
+
+.atlas-search-control svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.5;
+}
+
+.atlas-search-control kbd {
+  color: var(--text-faint);
+  font: 500 9px/1 var(--mono);
+}
+
 .atlas-estate-status {
   display: inline-flex;
   min-height: 32px;
@@ -242,6 +308,23 @@ dd {
   color: var(--text);
 }
 
+.atlas-estate-status[data-state="operational"] {
+  color: var(--atlas-operational);
+}
+
+.atlas-estate-status[data-state="degraded"],
+.atlas-estate-status[data-state="checking"] {
+  color: var(--atlas-accent);
+}
+
+.atlas-estate-status[data-state="unavailable"] {
+  color: var(--atlas-unavailable);
+}
+
+.atlas-estate-status[data-state="unknown"] {
+  color: var(--atlas-text-dim);
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
@@ -251,8 +334,141 @@ dd {
   box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
 }
 
+.status-dot[data-state="checking"],
+.status-dot[data-state="degraded"] {
+  background: var(--atlas-accent);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12);
+}
+
+.status-dot[data-state="unavailable"] {
+  background: var(--atlas-unavailable);
+  box-shadow: 0 0 0 3px rgba(226, 75, 74, 0.12);
+}
+
+.status-dot[data-state="unknown"] {
+  background: var(--atlas-text-dim);
+  box-shadow: none;
+}
+
 .atlas-mobile-nav {
   display: none;
+}
+
+.atlas-search-root {
+  position: fixed;
+  z-index: var(--atlas-z-dialog);
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding: min(12vh, 7rem) var(--atlas-space-4) var(--atlas-space-4);
+}
+
+.atlas-search-root[hidden] {
+  display: none;
+}
+
+.atlas-search-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(4, 4, 8, 0.82);
+  backdrop-filter: blur(8px);
+  cursor: default;
+}
+
+.atlas-search-panel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: min(720px, 78vh);
+  overflow: auto;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--atlas-radius-lg);
+  background: var(--bg-1);
+  box-shadow: var(--atlas-shadow-floating);
+  padding: var(--atlas-space-5);
+}
+
+.atlas-search-heading {
+  margin-bottom: var(--atlas-space-3);
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.atlas-search-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--bg-2);
+  color: var(--text);
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+}
+
+.atlas-search-status {
+  min-height: 1.5rem;
+  margin: var(--atlas-space-3) 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.atlas-search-results {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--atlas-radius-sm);
+  background: var(--border);
+  list-style: none;
+}
+
+.atlas-search-result {
+  background: var(--bg);
+}
+
+.atlas-search-result-main {
+  display: grid;
+  gap: var(--atlas-space-2);
+  min-height: var(--atlas-touch-min);
+  color: var(--text-dim);
+  padding: var(--atlas-space-4);
+  text-decoration: none;
+}
+
+.atlas-search-result-main:hover,
+.atlas-search-result-main:focus-visible {
+  background: var(--bg-2);
+  color: var(--text);
+}
+
+.atlas-search-result-main strong {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.atlas-search-result-main span {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.atlas-search-close {
+  min-height: var(--atlas-touch-min);
+  margin-top: var(--atlas-space-4);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--bg-2);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0 var(--atlas-space-4);
+}
+
+body.atlas-search-open {
+  overflow: hidden;
 }
 
 /* ---------- page foundation ---------- */
@@ -1131,6 +1347,24 @@ dd {
     display: none;
   }
 
+  .atlas-search-control {
+    width: var(--atlas-touch-min);
+    min-width: var(--atlas-touch-min);
+    min-height: var(--atlas-touch-min);
+    justify-content: center;
+    padding: 0;
+  }
+
+  .atlas-search-control__label,
+  .atlas-search-control kbd {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .product-chip {
     display: none;
   }
@@ -1200,6 +1434,10 @@ dd {
   .atlas-wordmark {
     font-size: 11px;
     letter-spacing: 0.08em;
+  }
+
+  .atlas-header__brand {
+    gap: 8px;
   }
 
   .atlas-estate-status-label {
@@ -1329,6 +1567,19 @@ dd {
     border-left: 0;
     padding-left: 0;
     white-space: normal;
+  }
+}
+
+@media (max-width: 390px) {
+  .atlas-wordmark {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .atlas-estate-status {
+    gap: 5px;
+    font-size: 8px;
+    letter-spacing: 0.04em;
   }
 }
 

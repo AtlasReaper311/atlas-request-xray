@@ -1,0 +1,93 @@
+name: Public interface preview
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - ".atlas/public-interface.json"
+      - ".github/workflows/interface-preview.yml"
+      - ".github/workflows/public-interface-conformance.yml"
+      - "_headers"
+      - "android-chrome-*.png"
+      - "apple-touch-icon.png"
+      - "css/**"
+      - "docs/**"
+      - "favicon*"
+      - "index.html"
+      - "site.webmanifest"
+      - "src/**"
+      - "static/vendor/atlas-interface/**"
+      - "test/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.repository }}-public-interface-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate X-Ray preview candidate
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Validate source and interface contracts
+        run: |
+          set -euo pipefail
+          for module in src/*.js; do
+            node --check "${module}"
+          done
+          node --test test/*.test.mjs
+          npx --yes html-validate@9.7.1 index.html
+          expected=(
+            favicon.ico
+            favicon-16x16.png
+            favicon-32x32.png
+            apple-touch-icon.png
+            android-chrome-192x192.png
+            android-chrome-512x512.png
+            site.webmanifest
+          )
+          for path in "${expected[@]}"; do
+            test -s "${path}"
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in sorted(Path(".").rglob("*.json")):
+              if ".git" not in path.parts:
+                  json.loads(path.read_text(encoding="utf-8"))
+          PY
+          git diff --check
+
+      - name: Check repository links offline
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: "--offline --no-progress --include-fragments --root-dir ${{ github.workspace }} ."
+          format: detailed
+          output: interface-link-report.txt
+          fail: true
+
+      - name: Upload interface link report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: xray-interface-link-report-${{ github.event.pull_request.head.sha }}
+          path: interface-link-report.txt
+          if-no-files-found: warn
+          retention-days: 14

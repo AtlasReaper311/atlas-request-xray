@@ -3,19 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Request X-Ray // Atlas Systems</title>
+<title>XRAY // ATLAS SYSTEMS</title>
 <meta name="description" content="Request X-Ray is an Atlas Systems browser tool for exploring retries, timeouts, caching, rate limiting, and latency in a simulated seven-layer request path.">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://xray.atlas-systems.uk/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Request X-Ray // Atlas Systems">
+<meta property="og:title" content="XRAY // ATLAS SYSTEMS">
 <meta property="og:description" content="Break a simulated request path and watch retries, deadlines, cache behaviour, and rate limits change the trace.">
 <meta property="og:url" content="https://xray.atlas-systems.uk/">
 <meta property="og:site_name" content="Atlas Systems">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Request X-Ray // Atlas Systems">
+<meta property="og:image" content="https://atlas-systems.uk/og/request-xray.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Request X-Ray simulated request path. // Atlas Systems">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="XRAY // ATLAS SYSTEMS">
 <meta name="twitter:description" content="A compact Atlas Systems simulator for request-path failure mechanics.">
+<meta name="twitter:image" content="https://atlas-systems.uk/og/request-xray.png">
+<meta name="twitter:image:alt" content="Request X-Ray simulated request path. // Atlas Systems">
 <link rel="stylesheet" href="css/xray.css">
 </head>
 <body data-atlas-bottom-nav="true">
@@ -24,7 +35,16 @@
   <div class="atlas-header__inner">
     <div class="atlas-header__brand">
       <a class="atlas-wordmark" href="https://atlas-systems.uk/">Atlas<span>_</span>Systems</a>
-      <span class="product-chip">Request X-Ray</span>
+      <a
+        class="atlas-estate-status"
+        href="https://status.atlas-systems.uk/"
+        data-atlas-status
+        data-state="checking"
+        aria-label="Atlas Systems status: Checking"
+      >
+        <span class="status-dot atlas-estate-status-dot" data-state="checking" aria-hidden="true"></span>
+        <span class="atlas-estate-status-label" data-atlas-status-label>Checking</span>
+      </a>
     </div>
     <nav class="atlas-header__nav" aria-label="Primary navigation">
       <a href="https://atlas-systems.uk/work/">Work</a>
@@ -34,10 +54,20 @@
       <a href="https://atlas-systems.uk/about/">About</a>
     </nav>
     <div class="atlas-header__actions">
-      <a class="atlas-estate-status" href="https://status.atlas-systems.uk/" data-state="operational">
-        <span class="status-dot" data-state="operational" aria-hidden="true"></span>
-        <span class="atlas-estate-status-label">Status</span>
-      </a>
+      <button
+        type="button"
+        class="atlas-search-control xray-search-button"
+        data-estate-search-open
+        aria-label="Search the estate"
+        aria-haspopup="dialog"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.2" y2="16.2"></line>
+        </svg>
+        <span class="atlas-search-control__label">Search</span>
+        <kbd data-estate-search-kbd>ctrl k</kbd>
+      </button>
     </div>
   </div>
 </header>
