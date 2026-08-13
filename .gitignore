@@ -11,6 +11,9 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
+# Cloudflare local state
+.wrangler/
+
 # Local environment
 .env
 .env.local
