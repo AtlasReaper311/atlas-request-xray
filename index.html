@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request X-Ray | Atlas Systems</title>
+<meta name="description" content="A browser-based simulator for a seven-layer request pipeline. Toggle retries, timeouts, caching, rate limiting, and latency variance, then watch the outcome change.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="css/xray.css">
+</head>
+<body>
+
+<header class="topbar">
+  <span class="wordmark">ATLAS SYSTEMS <span class="wordmark-slash">//</span> REQUEST X-RAY</span>
+  <a class="topbar-link" href="https://atlas-systems.uk">atlas-systems.uk</a>
+</header>
+
+<main>
+
+  <section class="intro">
+    <h1>Request X-Ray</h1>
+    <p class="lede">
+      One request, seven layers, and seven switches that decide what happens to it. Break the pipeline on purpose and
+      watch the same request take a different route, spend a different amount of time, and reach a different outcome.
+    </p>
+    <p class="lede lede-quiet">
+      Nothing here calls a real service. The whole simulation runs in this tab, and the URL carries the exact
+      configuration, so any run on this page can be sent to somebody else and reproduced precisely.
+    </p>
+  </section>
+
+  <section class="panel" id="scenarios">
+    <h2 class="panel-title">Scenarios</h2>
+    <p class="panel-note">Each scenario sets all seven switches at once. Change any switch afterwards to take it somewhere new.</p>
+    <div class="preset-row" id="preset-row"></div>
+  </section>
+
+  <section class="panel" id="controls">
+    <h2 class="panel-title">Pipeline switches</h2>
+    <p class="panel-note">Grouped by the layer that owns the behaviour. Browser and database have no switches; they do what they are told.</p>
+
+    <div class="switch-grid">
+
+      <div class="switch-group" data-owner="edge">
+        <span class="switch-owner">edge</span>
+        <div class="switch-row">
+          <input type="checkbox" id="sw-jitter">
+          <label for="sw-jitter">Latency variance</label>
+        </div>
+        <p class="switch-help">Adds a repeatable amount of extra latency to every layer, seeded from the configuration.</p>
+      </div>
+
+      <div class="switch-group" data-owner="router">
+        <span class="switch-owner">router</span>
+        <div class="switch-row">
+          <input type="checkbox" id="sw-ratelimit">
+          <label for="sw-ratelimit">Rate limit</label>
+        </div>
+        <p class="switch-help">Refuses the request at the router with 429 before any downstream work happens.</p>
+      </div>
+
+      <div class="switch-group switch-group-wide" data-owner="api">
+        <span class="switch-owner">api</span>
+        <div class="switch-row">
+          <label for="sw-retries">Retries</label>
+          <select id="sw-retries">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="switch-row">
+          <label for="sw-timeout">Timeout</label>
+          <select id="sw-timeout">
+            <option value="50">50ms</option>
+            <option value="100">100ms</option>
+            <option value="250">250ms</option>
+            <option value="500">500ms</option>
+          </select>
+        </div>
+        <p class="switch-help">The deadline applies to each attempt separately. Retries wait 30ms, then 60ms, then 120ms.</p>
+      </div>
+
+      <div class="switch-group" data-owner="service">
+        <span class="switch-owner">service</span>
+        <div class="switch-row">
+          <input type="checkbox" id="sw-serviceerror">
+          <label for="sw-serviceerror">Service error</label>
+        </div>
+        <p class="switch-help">The handler raises 503 before it reads anything, so the failure is immediate and total.</p>
+      </div>
+
+      <div class="switch-group switch-group-wide" data-owner="cache">
+        <span class="switch-owner">cache</span>
+        <div class="switch-row">
+          <input type="checkbox" id="sw-cachehit">
+          <label for="sw-cachehit">Cache hit</label>
+        </div>
+        <div class="switch-row">
+          <input type="checkbox" id="sw-stale">
+          <label for="sw-stale">Stale entry</label>
+        </div>
+        <p class="switch-help">A miss falls through to the database. A stale entry answers just as fast as a fresh one, which is the problem.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="panel" id="stage">
+    <h2 class="panel-title">Trace</h2>
+
+    <div class="stage-actions">
+      <button type="button" class="btn btn-primary" id="run">Run request</button>
+      <button type="button" class="btn" id="replay">Replay</button>
+      <button type="button" class="btn" id="copy-link">Copy permalink</button>
+      <span class="stage-hint" id="stage-hint">Ready.</span>
+    </div>
+
+    <div class="diagram">
+      <svg class="pipeline" viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+        <g class="connectors">
+          <line x1="97" y1="60" x2="188" y2="60"></line>
+          <line x1="240" y1="60" x2="331" y2="60"></line>
+          <line x1="383" y1="60" x2="474" y2="60"></line>
+          <line x1="526" y1="60" x2="617" y2="60"></line>
+          <line x1="669" y1="60" x2="760" y2="60"></line>
+          <line x1="812" y1="60" x2="903" y2="60"></line>
+        </g>
+        <g class="node" data-layer="browser" transform="translate(71,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="edge" transform="translate(214,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="router" transform="translate(357,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="api" transform="translate(500,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="service" transform="translate(643,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="cache" transform="translate(786,60)"><circle class="node-ring" r="26"></circle></g>
+        <g class="node" data-layer="database" transform="translate(929,60)"><circle class="node-ring" r="26"></circle></g>
+        <circle class="packet" id="packet" r="8" transform="translate(71,60)"></circle>
+      </svg>
+      <div class="layer-tabs" id="layer-tabs"></div>
+    </div>
+
+    <div class="budget">
+      <div class="budget-head">
+        <span class="budget-label">Latency budget</span>
+        <span class="budget-figures"><span id="budget-elapsed">0</span>ms of <span id="budget-total">500</span>ms</span>
+      </div>
+      <div class="budget-track"><span class="budget-fill" id="budget-fill"></span></div>
+    </div>
+
+    <dl class="metrics">
+      <div class="metric"><dt>Status</dt><dd id="m-status">idle</dd></div>
+      <div class="metric"><dt>Total latency</dt><dd id="m-latency">0ms</dd></div>
+      <div class="metric"><dt>Downstream calls</dt><dd id="m-downstream">0</dd></div>
+      <div class="metric"><dt>Attempts</dt><dd id="m-attempts">0</dd></div>
+      <div class="metric"><dt>Terminated at</dt><dd id="m-terminal">&ndash;</dd></div>
+      <div class="metric"><dt>Pattern</dt><dd id="m-pattern">&ndash;</dd></div>
+    </dl>
+
+    <p class="explanation" id="explanation"></p>
+  </section>
+
+  <section class="panel" id="inspector">
+    <h2 class="panel-title">Layer detail <span class="panel-title-sub" id="inspector-layer">browser</span></h2>
+
+    <div class="inspector-grid">
+      <div class="inspector-block">
+        <h3>Configured behaviour</h3>
+        <dl class="kv" id="inspector-config"></dl>
+      </div>
+      <div class="inspector-block">
+        <h3>Last run outcome</h3>
+        <dl class="kv" id="inspector-outcome"></dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="hops">
+    <h2 class="panel-title">Hop table</h2>
+    <p class="panel-note">The same trace without the animation. This is the accessible equivalent of the diagram and the fastest way to read a run.</p>
+
+    <div class="table-actions">
+      <button type="button" class="btn" id="copy-trace">Copy trace as JSON</button>
+      <span class="stage-hint" id="copy-hint"></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="hop-table">
+        <caption class="visually-hidden">Every hop in the last run, in order</caption>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Layer</th>
+            <th scope="col">Attempt</th>
+            <th scope="col">Outcome</th>
+            <th scope="col">Latency</th>
+            <th scope="col">Note</th>
+          </tr>
+        </thead>
+        <tbody id="hop-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="compare">
+    <h2 class="panel-title">Compare</h2>
+    <p class="panel-note">Pin the current configuration, change the switches, and read the two runs side by side.</p>
+
+    <div class="table-actions">
+      <button type="button" class="btn" id="pin">Pin current run</button>
+      <button type="button" class="btn" id="unpin">Clear pin</button>
+    </div>
+
+    <div class="compare-grid" id="compare-grid">
+      <p class="panel-note" id="compare-empty">Nothing pinned yet.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="sitefoot">
+  <span>Request X-Ray is a simulation. The latency model is a deliberate teaching model, not a measurement of any real system.</span>
+  <a href="https://atlas-systems.uk">atlas-systems.uk</a>
+</footer>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
