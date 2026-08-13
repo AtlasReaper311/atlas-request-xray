@@ -9,6 +9,11 @@ let previousFocus = null;
 let controller = null;
 let timer = null;
 
+export function isAtlasOwnedHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return host === "atlas-systems.uk" || host.endsWith(".atlas-systems.uk");
+}
+
 function resultHref(hit) {
   const repository = String(hit.source_repo || hit.repo || "");
   const path = String(hit.file_path || hit.path || "");
@@ -25,11 +30,6 @@ function resultHref(hit) {
 function displayText(value, limit = 220) {
   const cleaned = String(value || "")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
     .replace(/\s+/g, " ")
     .trim();
   if (cleaned.length <= limit) return cleaned;
@@ -109,7 +109,7 @@ function renderResults(data) {
     if (href) {
       main.href = href;
       const destination = new URL(href);
-      if (!destination.hostname.endsWith("atlas-systems.uk")) {
+      if (!isAtlasOwnedHost(destination.hostname)) {
         main.target = "_blank";
         main.rel = "noopener noreferrer";
       }
